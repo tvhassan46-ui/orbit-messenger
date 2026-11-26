@@ -13,12 +13,12 @@ function connect(){const c=cfg();if(!c.url||!c.key)throw new Error('Enter your S
 function say(t){$('authmsg').textContent=t}
 function initials(n){return (n||'?').split(/[\s@]+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}
 function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-async function boot(){try{if(!sb)connect();const {data:{session}}=await sb.auth.getSession();if(session){user=session.user;showApp();await loadChats()}}catch(e){say(e.message)}}
+async function boot(){try{if(!sb)connect();const {data,error}=await sb.auth.getSession();if(error)throw error;const session=data?.session;if(session){user=session.user;showApp();await loadChats()}else say('Connected. Sign in or create an account with email and password.')}catch(e){say('Connection/session check: '+(e.message||String(e)))}}
 function showApp(){$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email||user.id}
 async function authAction(fn){try{connect();say('');await fn()}catch(e){say(e.message||String(e))}}
 sb=createClient(cfg().url,cfg().key);
 $('signin').onclick=()=>authAction(async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)throw error;user=data.user;showApp();await loadChats()});
-$('signup').onclick=()=>authAction(async()=>{const {data,error}=await sb.auth.signUp({email:$('email').value,password:$('password').value});if(error)throw error;user=data.user;if(data.session){showApp();await loadChats()}else say('Account created. Check your email for the confirmation link.')});
+$('signup').onclick=()=>authAction(async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password)throw new Error('Enter email and password first.');if(password.length<6)throw new Error('Password must be at least 6 characters.');const {data,error}=await sb.auth.signUp({email,password});if(error)throw error;user=data.user;if(data.session){showApp();await loadChats()}else say('Account created. Check your email for the confirmation link.')});
 $('google').onclick=()=>authAction(async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href}});if(error)throw error});
 $('logout').onclick=async()=>{await sb.auth.signOut();location.reload()};
 $('settings').onclick=()=>{const url=prompt('Supabase project URL',localStorage.getItem('orbit-url')||'');if(url===null)return;const key=prompt('Supabase publishable key',localStorage.getItem('orbit-key')||'');if(key===null)return;localStorage.setItem('orbit-url',url.trim());localStorage.setItem('orbit-key',key.trim());alert('Saved. Reload to use the updated connection.')};
