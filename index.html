@@ -8,7 +8,7 @@
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const $=id=>document.getElementById(id);let sb=null,user=null,active=null,channel=null,people=[],chats=[];
-const cfg=()=>({url:localStorage.getItem('orbit-url')||$('url').value.trim(),key:localStorage.getItem('orbit-key')||$('key').value.trim()});
+const cfg=()=>({url:$('url').value.trim()||localStorage.getItem('orbit-url')||'',key:$('key').value.trim()||localStorage.getItem('orbit-key')||''});
 function connect(){const c=cfg();if(!c.url||!c.key)throw new Error('Enter your Supabase URL and publishable key.');sb=createClient(c.url,c.key);}
 function say(t){$('authmsg').textContent=t}
 function initials(n){return (n||'?').split(/[\s@]+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}
@@ -16,7 +16,7 @@ function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt
 async function boot(){try{if(!sb)connect();const {data:{session}}=await sb.auth.getSession();if(session){user=session.user;showApp();await loadChats()}}catch(e){say(e.message)}}
 function showApp(){$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email||user.id}
 async function authAction(fn){try{connect();say('');await fn()}catch(e){say(e.message||String(e))}}
-$('saveconfig').onclick=()=>{localStorage.setItem('orbit-url',$('url').value.trim());localStorage.setItem('orbit-key',$('key').value.trim());say('Connection saved in this browser.');};
+$('url').value=localStorage.getItem('orbit-url')||'';$('key').value=localStorage.getItem('orbit-key')||'';$('saveconfig').onclick=async()=>{try{const c={url:$('url').value.trim().replace(/\\/$/,''),key:$('key').value.trim()};if(!/^https:\\/\\/[^\\s]+\\.supabase\\.co$/.test(c.url))throw new Error('Project URL must look like https://YOUR_PROJECT.supabase.co (no /rest/v1).');if(!c.key.startsWith('sb_publishable_')&&!c.key.startsWith('eyJ'))throw new Error('Paste your Supabase Publishable key (not a Secret key).');localStorage.setItem('orbit-url',c.url);localStorage.setItem('orbit-key',c.key);sb=createClient(c.url,c.key);say('Saved. Testing Supabase connection…');const r=await fetch(c.url+'/auth/v1/health',{headers:{apikey:c.key}});if(!r.ok)throw new Error('Supabase health check returned HTTP '+r.status+'. Check that URL and key belong to the same project.');say('Supabase connection verified. You can now create an account or sign in.');}catch(e){say(e.message||String(e));}};
 $('signin').onclick=()=>authAction(async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)throw error;user=data.user;showApp();await loadChats()});
 $('signup').onclick=()=>authAction(async()=>{const {data,error}=await sb.auth.signUp({email:$('email').value,password:$('password').value});if(error)throw error;user=data.user;if(data.session){showApp();await loadChats()}else say('Account created. Check your email for the confirmation link.')});
 $('google').onclick=()=>authAction(async()=>{const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.href}});if(error)throw error});
