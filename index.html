@@ -8,7 +8,7 @@
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 const $=id=>document.getElementById(id);let sb=null,user=null,active=null,channel=null,people=[],chats=[];
-const cfg=()=>({url:'https://ojkhbylpauznnnakkgwn.supabase.co',key:'sb_publishable_KFDq3rZBqVKmuodOHnRi8g_7dyKf1aL'});
+const cfg=()=>({url:'https://cwmeymnmddspuuyopwza.supabase.co',key:'sb_publishable_KFDq3rZBqVKmuodOHnRi8g_7dyKf1aL'});
 function connect(){const c=cfg();if(!c.url||!c.key)throw new Error('Enter your Supabase URL and publishable key.');sb=createClient(c.url,c.key);}
 function say(t){$('authmsg').textContent=t}
 function initials(n){return (n||'?').split(/[\s@]+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase()}
