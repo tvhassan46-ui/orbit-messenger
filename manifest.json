@@ -1,0 +1,14 @@
+{
+  "name": "Orbit Messenger",
+  "short_name": "Orbit",
+  "description": "Private messaging with Orbit",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b141a",
+  "theme_color": "#00a884",
+  "orientation": "portrait",
+  "icons": [
+    {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
