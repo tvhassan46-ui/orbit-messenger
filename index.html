@@ -138,7 +138,7 @@ async function authAction(fn){try{connect();say('');await fn()}catch(e){say(e.me
 sb=createClient(cfg().url,cfg().key);
 async function ensureProfile(u){if(!u)return;const meta=u.user_metadata||{};const display_name=String(meta.display_name||u.email?.split('@')[0]||'hello user').trim();const username=String(meta.username||('hello_'+u.id.replace(/-/g,'').slice(0,10))).toLowerCase().replace(/[^a-z0-9_]/g,'');const {error}=await sb.from('profiles').upsert({id:u.id,username,display_name},{onConflict:'id',ignoreDuplicates:true});if(error)throw error;}
 
-$('togglePassword').onclick=()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('togglePassword').setAttribute('aria-label',p.type==='password'?'Show password':'Hide password')};
+const togglePassword=$('togglePassword');if(togglePassword)togglePassword.onclick=()=>{const p=$('password');p.type=p.type==='password'?'text':'password';togglePassword.setAttribute('aria-label',p.type==='password'?'Show password':'Hide password')};
 $('forgot').onclick=async()=>{const email=$('email').value.trim();if(!email){say('Enter your email first to receive a password reset link.');$('email').focus();return}try{connect();const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;say('Password reset email sent. Check your inbox.')}catch(e){say(e.message||String(e))}};
 $('orbit-login-form').addEventListener('submit',e=>e.preventDefault());
 $('signin').onclick=()=>authAction(async()=>{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value,password:$('password').value});if(error)throw error;user=data.user;await ensureProfile(user);showApp();await loadChats()});
