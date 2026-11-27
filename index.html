@@ -317,7 +317,7 @@ window.addEventListener('online',refreshSoon);
 function setNav(name){document.querySelectorAll('#bottomnav button').forEach(x=>x.classList.toggle('active',x.dataset.nav===name))}
 function showChats(){listView='chats';$('search').value='';setNav('chats');$('chatsTab').classList.remove('secondary');$('peopleTab').classList.add('secondary');renderList()}
 function closeSettings(){$('settingsmodal').classList.add('hidden');setNav(listView==='chats'?'chats':'discover')}
-async function openSettings(showProfile){$('settingsmodal').classList.remove('hidden');$('settingsmsg').textContent='';$('profileform').classList.add('hidden');$('extraspanel').classList.add('hidden');await loadProfile();if(showProfile)showProfileForm()}
+async function openSettings(showProfile){$('settingsmodal').classList.remove('hidden');$('settingsmsg').textContent='';$('profileform').classList.add('hidden');$('extraspanel').classList.add('hidden');document.querySelector('#settingsmodal .hello-uiverse-settings')?.classList.remove('hidden');document.querySelector('#settingsmodal .profilehero')?.classList.remove('hidden');document.querySelector('#settingsmodal .hello-settings-page')?.remove();await loadProfile();if(showProfile)showProfileForm()}
 async function loadProfile(){try{const {data,error}=await sb.from('profiles').select('username,display_name,avatar_url,bio').eq('id',user.id).maybeSingle();if(error)throw error;$('displayname').value=data?.display_name||user.email?.split('@')[0]||'';$('username').value=data?.username||'';$('avatarurl').value=data?.avatar_url||'';$('bio').value=data?.bio||'';$('profilelabel').textContent=data?.display_name||user.email||'Your profile';$('profileavatar').innerHTML=data?.avatar_url?'<img src="'+esc(data.avatar_url)+'" alt="">':esc(initials(data?.display_name||data?.username||user.email));$('who').textContent=(data?.display_name||user.email||'')+(data?.username?' · @'+data.username:'')}catch(e){console.error('Profile load:',e.message);$('settingsmsg').textContent='Profile could not be loaded: '+friendly(e)}}
 function showProfileForm(){$('profileform').classList.remove('hidden');$('profileform').scrollIntoView({block:'nearest'})}
 $('settings').onclick=()=>openSettings();
@@ -553,6 +553,6 @@ else{body.appendChild(msg);msg.className='settingsmsg';msg.textContent=id==='acc
 }
 ['editprofile','accountinfo','privacyinfo','aboutinfo','themeitem','statusitem','notificationsitem','extrasitem','feedbackitem'].forEach(id=>{const b=document.getElementById(id);if(b)b.onclick=e=>{e.preventDefault();open(id,b.textContent.trim())}});
 document.getElementById('cancelprofile')?.addEventListener('click',()=>{if(page)back()});
-document.getElementById('closemodal')?.addEventListener('click',back);
+document.getElementById('closemodal').onclick=()=>{if(page)back();closeSettings()};
 })();
 </script></body></html>
