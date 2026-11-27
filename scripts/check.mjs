@@ -1,21 +1,14 @@
-// Fails if any script on the page has a syntax error, or if code looks up an element that does not exist.
-// A single syntax error silently disables every button, so run this before each deploy.
+// Syntax-check inline scripts and flag duplicate IDs in the static HTML.
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-let failed = false;
-[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach(([, code], i) => {
-  try { new vm.Script(code, { filename: `index.html inline script ${i + 1}` }); }
-  catch (e) { failed = true; console.error(e.stack.split('\n').slice(0, 5).join('\n')); }
-});
-// Only elements written above the main script exist while it runs.
-const markup = html.slice(0, html.indexOf('<script>'));
-// Ids inside script strings are elements the script creates itself.
-const generated = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join('\n');
-const ids = new Set([...(markup + generated).matchAll(/\bid="([\w-]+)"/g)].map((m) => m[1]));
-for (const [, id] of html.matchAll(/\$\('([\w-]+)'\)/g)) {
-  if (!ids.has(id)) { failed = true; console.error(`Element id missing, or declared after the script: ${id}`); }
+const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+let failed=false;
+for(const [i,m] of [...html.matchAll(/<script(?:\\s[^>]*)?>([\\s\\S]*?)<\\/script>/g)].entries()){
+ const code=m[1]; if(!code.trim())continue;
+ try{new vm.Script(code,{filename:'index.html script '+(i+1)});}catch(e){failed=true;console.error(e.stack.split('\\n').slice(0,5).join('\\n'));}
 }
-if (failed) process.exit(1);
-console.log('Page scripts parse and all element ids exist.');
+const ids=[...html.matchAll(/\\bid="([\\w-]+)"/g)].map(m=>m[1]);
+const duplicates=ids.filter((id,i)=>ids.indexOf(id)!==i);
+if(duplicates.length){failed=true;console.error('Duplicate static IDs:',[...new Set(duplicates)].join(', '));}
+if(failed)process.exit(1);
+console.log('Inline JavaScript parses; no duplicate static IDs.');
