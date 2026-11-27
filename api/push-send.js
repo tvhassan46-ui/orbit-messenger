@@ -28,8 +28,9 @@ export default async function handler(req, res) {
         await webpush.sendNotification(s.subscription, JSON.stringify({
           title: sender?.display_name || sender?.username || 'New message',
           body,
-          tag: msg.conversation_id,
-          url: '/'
+          tag: 'hello-'+msg.conversation_id,
+          conversation_id: msg.conversation_id,
+          url: '/?chat='+encodeURIComponent(msg.conversation_id)
         }));
         sent++;
       } catch (e) {
