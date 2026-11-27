@@ -511,4 +511,8 @@ async function helloOpenGroup(gid){
 <script id="hello-backlogin-direct-fix">
 (()=>{const b=document.getElementById('backlogin');if(!b)return;b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();try{setAuthMode('login');document.getElementById('email')?.focus();}catch(err){console.error('Back to sign in failed',err);const t=document.getElementById('authTitle');if(t)t.textContent='Sign in';document.getElementById('signupfields')?.classList.add('hidden');document.getElementById('confirmPasswordWrap')?.classList.add('hidden');document.getElementById('signin')?.classList.remove('hidden');document.getElementById('signup')?.classList.remove('hidden');b.classList.add('hidden');}},true);})();
 </script>
+
+<script id="hello-pwa-auto-update">
+(()=>{if(!('serviceWorker' in navigator))return;let hadController=!!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController)location.reload();hadController=true});window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'})})})}catch(e){console.warn('PWA update check:',e)}})})();
+</script>
 </body></html>
