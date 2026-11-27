@@ -526,4 +526,33 @@ MIT License, Copyright (c) reglobby (murphyy) */
 #settingsmodal .hello-uiverse-value svg{width:22px;height:22px;flex-shrink:0;fill:#7D8590}
 #settingsmodal .hello-uiverse-value:hover{transform:translateX(2px)}
 @media(prefers-reduced-motion:reduce){#settingsmodal .hello-uiverse-value{transition:none!important}}
-</style></body></html>
+</style>
+<style id="hello-settings-subdashboard-style">
+#settingsmodal .hello-settings-page{display:none;min-height:280px;animation:helloSettingsSlide .26s cubic-bezier(.2,.8,.2,1)}
+#settingsmodal .hello-settings-page.active{display:block}
+#settingsmodal .hello-settings-pagehead{display:flex;align-items:center;gap:12px;border-bottom:1px solid #333;padding:4px 0 14px;margin-bottom:16px}
+#settingsmodal .hello-settings-back{background:#292929!important;color:#eee!important;border:1px solid #404040!important;padding:9px 12px!important}
+#settingsmodal .hello-settings-pagebody{padding:4px 2px;min-height:220px}
+#settingsmodal .hello-settings-pagebody .settingsmsg{padding:12px;background:#202020;border-radius:12px;line-height:1.6}
+#settingsmodal .hello-settings-pagebody #profileform{display:block!important}
+#settingsmodal .hello-settings-pagebody #extraspanel{display:block!important}
+@keyframes helloSettingsSlide{from{opacity:.3;transform:translateX(18px)}to{opacity:1;transform:translateX(0)}}
+@media(prefers-reduced-motion:reduce){#settingsmodal .hello-settings-page{animation:none}}
+</style>
+<script id="hello-settings-subdashboard">
+(()=>{const modal=document.getElementById('settingsmodal');if(!modal)return;const menu=modal.querySelector('.hello-uiverse-settings'),hero=modal.querySelector('.profilehero'),actions=modal.querySelector('.modalactions'),msg=document.getElementById('settingsmsg'),form=document.getElementById('profileform'),extras=document.getElementById('extraspanel');if(!menu||!hero||!msg||!form||!extras)return;const original={formParent:form.parentNode,formNext:form.nextSibling,extrasParent:extras.parentNode,extrasNext:extras.nextSibling,msgParent:msg.parentNode,msgNext:msg.nextSibling};let page=null,body=null;
+function restoreNode(node,parent,next){if(parent)parent.insertBefore(node,next&&next.parentNode===parent?next:null)}
+function back(){if(!page)return;restoreNode(form,original.formParent,original.formNext);restoreNode(extras,original.extrasParent,original.extrasNext);restoreNode(msg,original.msgParent,original.msgNext);page.remove();page=null;menu.classList.remove('hidden');hero.classList.remove('hidden');if(actions)actions.classList.remove('hidden')}
+function open(id,title){menu.classList.add('hidden');hero.classList.add('hidden');if(actions)actions.classList.add('hidden');page=document.createElement('section');page.className='hello-settings-page active';page.innerHTML='<div class="hello-settings-pagehead"><button type="button" class="hello-settings-back">← Back</button><h2 style="margin:0">'+title+'</h2></div><div class="hello-settings-pagebody"></div>';body=page.querySelector('.hello-settings-pagebody');modal.querySelector('.modal').appendChild(page);page.querySelector('.hello-settings-back').onclick=back;
+if(id==='editprofile'){body.appendChild(form);form.classList.remove('hidden');}
+else if(id==='extrasitem'){body.appendChild(extras);extras.classList.remove('hidden');}
+else if(id==='notificationsitem'){body.appendChild(msg);enableNotifications();msg.className='settingsmsg';}
+else if(id==='themeitem'||id==='statusitem'){body.appendChild(extras);extras.classList.remove('hidden');msg.textContent=id==='themeitem'?'Use the control below to switch between light and dark appearance.':'Change your online status using the control below.';msg.className='settingsmsg';body.prepend(msg);}
+else if(id==='feedbackitem'){back();document.getElementById('feedbackmodal')?.classList.remove('hidden');document.getElementById('helloFeedbackText')?.focus();}
+else{body.appendChild(msg);msg.className='settingsmsg';msg.textContent=id==='accountinfo'?'You are signed in as '+(window.user?.email||'your account')+'. Email/password authentication is managed by Supabase.':id==='privacyinfo'?'Signed-in users can find your profile. Messages are limited to conversation members, but they are not end-to-end encrypted, and anyone with a media link can open that file.':'hello — private conversations with people you find by username.';}
+}
+['editprofile','accountinfo','privacyinfo','aboutinfo','themeitem','statusitem','notificationsitem','extrasitem','feedbackitem'].forEach(id=>{const b=document.getElementById(id);if(b)b.onclick=e=>{e.preventDefault();open(id,b.textContent.trim())}});
+document.getElementById('cancelprofile')?.addEventListener('click',()=>{if(page)back()});
+document.getElementById('closemodal')?.addEventListener('click',back);
+})();
+</script></body></html>
