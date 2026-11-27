@@ -259,7 +259,7 @@ function setAuthMode(mode){authMode=mode;const signup=mode==='signup',recovery=m
 $('signupfields').classList.toggle('hidden',!signup);$('confirmPasswordWrap').classList.toggle('hidden',login);$('emailWrap').classList.toggle('hidden',recovery);
 $('authTitle').textContent=signup?'Register':recovery?'New password':'Sign in';
 $('authintro').textContent=signup?'Create your hello account to get started.':recovery?'Choose a new password for your account.':'Welcome back. Sign in to continue.';
-$('signin').classList.toggle('hidden',signup);$('signin').textContent=recovery?'Update password':'Sign in';$('signup').classList.toggle('hidden',recovery);$('signup').textContent=signup?'Create Account':'Create account';
+$('signin').classList.toggle('hidden',signup);$('signin').textContent=recovery?'Update password':'Sign in';$('signup').classList.toggle('hidden',recovery);$('signup').textContent=signup?'Create Account':'Create Account';
 $('backlogin').classList.toggle('hidden',login);$('backlogin').textContent=recovery?'Cancel':'Already have an account? Sign in';$('loginOptions').classList.toggle('hidden',!login);$('resend').classList.add('hidden');
 $('password').autocomplete=login?'current-password':'new-password';say('')}
 function showRecovery(){$('app').classList.add('hidden');$('auth').classList.remove('hidden');setAuthMode('recovery')}
@@ -284,7 +284,7 @@ $('orbit-login-form').addEventListener('submit',e=>e.preventDefault());
 $('orbit-login-form').addEventListener('keydown',e=>{if(e.key!=='Enter'||e.target.tagName!=='INPUT')return;e.preventDefault();if(authMode==='signup')createAccount();else if(authMode==='recovery')updatePassword();else signIn()});
 $('signin').onclick=()=>{try{connect();if(authMode==='recovery')updatePassword();else signIn()}catch(e){say(friendly(e),'error')}};
 $('signup').onclick=()=>{try{connect();if(authMode!=='signup'){setAuthMode('signup');$('firstname').focus();return}createAccount()}catch(e){say(friendly(e),'error')}};
-$('backlogin').onclick=async()=>{if(authMode==='recovery'){recoveryMode=false;history.replaceState(null,'',location.pathname);if(sb){const {error}=await sb.auth.signOut();if(error){say(friendly(error),'error');return}}}setAuthMode('login')};
+$('backlogin').onclick=async()=>{try{if(authMode==='recovery'){recoveryMode=false;history.replaceState(null,'',location.pathname);if(sb){const {error}=await sb.auth.signOut();if(error){say(friendly(error),'error');return}}}setAuthMode('login');$('email').focus()}catch(e){say(friendly(e),'error')}};
 async function boot(){try{connect();say('Checking your session…');const {data,error}=await sb.auth.getSession();if(error)throw error;const session=data?.session;
 if(session&&recoveryMode){showRecovery();return}recoveryMode=false;
 if(session){say('Restoring your session…');await enterApp(session.user)}else if(linkError){say(linkError+'. Request a new link and try again.','error')}else say('Sign in or create an account with email and password.')}catch(e){console.error('Session check:',e?.message||e);say('Could not restore your session. '+friendly(e),'error')}}
@@ -493,22 +493,9 @@ async function helloOpenGroup(gid){
 </script>
 <!-- Removed legacy capture-phase auth guard; core setAuthMode handler controls transitions. -->
 
-<script id="hello-auth-back-navigation-fix">
-(()=>{
- const back=document.getElementById('backlogin');
- const create=document.getElementById('signup');
- const title=document.getElementById('authTitle');
- if(!back||!create||!title)return;
- const ensureBack=()=>{if(title.textContent.trim()==='Register'){back.classList.remove('hidden');back.style.display='inline-flex';back.style.visibility='visible';back.style.opacity='1';back.style.pointerEvents='auto';back.textContent='Already have an account? Sign in';}};
- create.addEventListener('click',()=>{setTimeout(ensureBack,0);setTimeout(ensureBack,80)},true);
- const observer=new MutationObserver(ensureBack);observer.observe(title,{childList:true,characterData:true,subtree:true});
- back.addEventListener('click',()=>{setTimeout(()=>{if(title.textContent.trim()==='Sign in')back.style.display='none'},0)});
-})();
-</script>
+<!-- Removed conflicting auth navigation override: hello-auth-back-navigation-fix -->
 
-<script id="hello-backlogin-direct-fix">
-(()=>{const b=document.getElementById('backlogin');if(!b)return;b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();try{setAuthMode('login');document.getElementById('email')?.focus();}catch(err){console.error('Back to sign in failed',err);const t=document.getElementById('authTitle');if(t)t.textContent='Sign in';document.getElementById('signupfields')?.classList.add('hidden');document.getElementById('confirmPasswordWrap')?.classList.add('hidden');document.getElementById('signin')?.classList.remove('hidden');document.getElementById('signup')?.classList.remove('hidden');b.classList.add('hidden');}},true);})();
-</script>
+<!-- Removed conflicting auth navigation override: hello-backlogin-direct-fix -->
 
 <script id="hello-pwa-auto-update">
 (()=>{if(!('serviceWorker' in navigator))return;let hadController=!!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController)location.reload();hadController=true});window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'})})})}catch(e){console.warn('PWA update check:',e)}})})();
