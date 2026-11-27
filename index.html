@@ -501,5 +501,13 @@ async function helloOpenGroup(gid){
 </style>
 <script id="hello-auth-loading-fix-js">
 (()=>{const overlay=document.createElement('div');overlay.id='helloAuthLoader';overlay.className='hidden';overlay.innerHTML='<span class="hello-spinner"></span><span id="helloLoaderLabel">Please wait…</span>';document.body.appendChild(overlay);
-const old=window.authAction;if(typeof old!=='function')return;window.authAction=async function(progress,fn){if(window.authBusy)return;const label=document.getElementById('helloLoaderLabel');if(label)label.textContent=progress||'Please wait…';overlay.classList.remove('hidden');try{return await old.call(this,progress,fn)}finally{overlay.classList.add('hidden')}}})();
+function show(label){document.getElementById('helloLoaderLabel').textContent=label;overlay.classList.remove('hidden')}
+function hide(){overlay.classList.add('hidden')}
+const originalSignIn=window.signIn,originalCreate=window.createAccount,originalUpdate=window.updatePassword;
+window.signIn=async function(){show('Signing in…');try{return await originalSignIn()}finally{hide()}};
+window.createAccount=async function(){show('Creating account…');try{return await originalCreateAccount()}finally{hide()}};
+window.updatePassword=async function(){show('Updating password…');try{return await originalUpdate()}finally{hide()}};
+document.getElementById('signin')?.addEventListener('click',()=>{show('Signing in…');setTimeout(()=>{if(!document.getElementById('app')?.classList.contains('hidden'))hide();else if(document.getElementById('authmsg')?.textContent)hide();else setTimeout(hide,12000)},12000)},{capture:true});
+document.getElementById('signup')?.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Register'){show('Creating account…');setTimeout(hide,12000)}});
+})();
 </script></body></html>
