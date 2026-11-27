@@ -464,6 +464,38 @@ function helloShowSaved(){const old=document.querySelector('.hello-saved-modal')
 @media(max-width:760px){#bottomnav{position:absolute;bottom:0;left:0;right:0}.listpane{position:relative;padding-bottom:62px}}
 </style>
 <script id="hello-whatsapp-bottom-tabs">
-(()=>{const nav=document.getElementById('bottomnav'),list=document.getElementById('list');if(!nav||!list)return;const original=list.innerHTML;let section='chats';function setActive(s){nav.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===s))}function restore(){section='chats';list.innerHTML=original;setActive('chats');document.getElementById('chatsTab')?.click();}nav.innerHTML='<button data-nav="chats" class="active"><span class="navicon">▣</span>Chats</button><button data-nav="groups"><span class="navicon">♧</span>Groups</button><button data-nav="status"><span class="navicon">◌</span>Status</button><button data-nav="calls"><span class="navicon">☎</span>Calls</button>';nav.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return;e.stopImmediatePropagation();section=b.dataset.nav;setActive(section);if(section==='chats'){restore();return}if(section==='groups'){list.innerHTML='<div class="hello-nav-view"><div style="font-size:42px">♧</div><h2>Groups</h2><p>Group conversations will appear here as group chat support is connected.</p><button type="button" id="helloGroupsDiscover">Find people</button></div>';document.getElementById('helloGroupsDiscover')?.addEventListener('click',()=>document.getElementById('peopleTab')?.click());return}if(section==='status'){list.innerHTML='<div class="hello-nav-view"><div style="font-size:42px">◌</div><h2>Status</h2><p>Share updates with your contacts. Status publishing and viewing are coming soon.</p><button type="button" id="helloStatusInfo">＋ My status</button></div>';document.getElementById('helloStatusInfo')?.addEventListener('click',()=>alert('Status sharing is not yet connected.'));return}if(section==='calls'){list.innerHTML='<div class="hello-nav-view"><div style="font-size:42px">☎</div><h2>Calls</h2><p>Start a voice or video call by opening a chat and using its call controls.</p><button type="button" id="helloCallsChats">Open chats</button></div>';document.getElementById('helloCallsChats')?.addEventListener('click',restore);return}},{capture:true})})();
+(()=>{const nav=document.getElementById('bottomnav'),list=document.getElementById('list');if(!nav||!list)return;const original=list.innerHTML;let section='chats';function setActive(s){nav.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('active',b.dataset.nav===s))}function restore(){section='chats';list.innerHTML=original;setActive('chats');document.getElementById('chatsTab')?.click();}nav.innerHTML='<button data-nav="chats" class="active"><span class="navicon">▣</span>Chats</button><button data-nav="groups"><span class="navicon">♧</span>Groups</button><button data-nav="status"><span class="navicon">◌</span>Status</button><button data-nav="calls"><span class="navicon">☎</span>Calls</button>';nav.addEventListener('click',e=>{const b=e.target.closest('[data-nav]');if(!b)return;e.stopImmediatePropagation();section=b.dataset.nav;setActive(section);if(section==='chats'){restore();return}if(section==='groups'){helloRenderGroups();return}if(section==='status'){list.innerHTML='<div class="hello-nav-view"><div style="font-size:42px">◌</div><h2>Status</h2><p>Share updates with your contacts. Status publishing and viewing are coming soon.</p><button type="button" id="helloStatusInfo">＋ My status</button></div>';document.getElementById('helloStatusInfo')?.addEventListener('click',()=>alert('Status sharing is not yet connected.'));return}if(section==='calls'){list.innerHTML='<div class="hello-nav-view"><div style="font-size:42px">☎</div><h2>Calls</h2><p>Start a voice or video call by opening a chat and using its call controls.</p><button type="button" id="helloCallsChats">Open chats</button></div>';document.getElementById('helloCallsChats')?.addEventListener('click',restore);return}},{capture:true})})();
 </script>
-</body></html>
+<script id="hello-functional-groups">
+async function helloRenderGroups(){
+ const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view"><h2>Groups</h2><button id="helloNewGroup">＋ Create group</button><div id="helloGroupList" style="text-align:left;margin-top:14px"></div></div>';
+ document.getElementById('helloNewGroup').onclick=helloCreateGroup;
+ await helloFetchGroups();
+}
+async function helloFetchGroups(){
+ const box=document.getElementById('helloGroupList');if(!box)return;
+ try{const {data:mem,error}=await sb.from('hello_group_members').select('group_id').eq('user_id',user.id);if(error)throw error;
+ const ids=(mem||[]).map(x=>x.group_id);if(!ids.length){box.innerHTML='<p class="muted">No groups yet. Create one.</p>';return}
+ const {data,error:e}=await sb.from('hello_groups').select('id,name,created_at').in('id',ids).order('created_at',{ascending:false});if(e)throw e;
+ box.innerHTML=(data||[]).map(g=>'<button class="secondary" style="display:block;width:100%;margin:8px 0;text-align:left" data-group="'+esc(g.id)+'">♧ '+esc(g.name)+'</button>').join('');
+ box.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>helloOpenGroup(b.dataset.group));
+ }catch(e){box.innerHTML='<p>Groups load error: '+esc(e.message)+'</p>'}
+}
+async function helloCreateGroup(){
+ const name=prompt('Group name:');if(!name?.trim())return;
+ const idsRaw=prompt('Optional: member user IDs (UUIDs), separated by commas. Leave blank for now:')||'';
+ const ids=idsRaw.split(',').map(x=>x.trim()).filter(Boolean);
+ try{const {data,error}=await sb.rpc('hello_create_group',{group_name:name.trim(),member_ids:ids});if(error)throw error;await helloFetchGroups();alert('Group created!');}
+ catch(e){alert('Could not create group: '+e.message)}
+}
+async function helloOpenGroup(gid){
+ const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view" style="text-align:left"><button class="secondary" id="helloGroupBack">← Groups</button><h2 id="helloGroupTitle">Group chat</h2><div id="helloGroupMsgs" style="max-height:55vh;overflow:auto"></div><form id="helloGroupForm" class="row"><input id="helloGroupText" placeholder="Message group…"><button>Send</button></form></div>';
+ document.getElementById('helloGroupBack').onclick=helloRenderGroups;
+ const {data:g,error}=await sb.from('hello_groups').select('name').eq('id',gid).single();if(error){alert(error.message);return}document.getElementById('helloGroupTitle').textContent=g.name;
+ async function load(){const {data,error}=await sb.from('hello_group_messages').select('id,sender_id,content,created_at').eq('group_id',gid).order('created_at').limit(200);if(error){document.getElementById('helloGroupMsgs').textContent=error.message;return}
+ const rows=data||[];const ids=[...new Set(rows.map(x=>x.sender_id))];let p=[];if(ids.length){const res=await sb.from('profiles').select('id,username,display_name').in('id',ids);p=res.data||[]}
+ document.getElementById('helloGroupMsgs').innerHTML=rows.map(m=>'<div style="padding:9px;margin:7px 0;background:'+(m.sender_id===user.id?'#454545':'#292929')+';border-radius:12px"><small>'+esc(p.find(x=>x.id===m.sender_id)?.display_name||p.find(x=>x.id===m.sender_id)?.username||'Member')+'</small><div>'+esc(m.content)+'</div></div>').join('')||'<p class="muted">Say hello 👋</p>';const el=document.getElementById('helloGroupMsgs');el.scrollTop=el.scrollHeight}
+ await load();
+ document.getElementById('helloGroupForm').onsubmit=async e=>{e.preventDefault();const input=document.getElementById('helloGroupText'),content=input.value.trim();if(!content)return;input.value='';const {error}=await sb.from('hello_group_messages').insert({group_id:gid,sender_id:user.id,content});if(error){alert(error.message);return}await load()};
+}
+</script></body></html>
