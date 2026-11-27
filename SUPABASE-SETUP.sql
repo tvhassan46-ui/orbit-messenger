@@ -65,6 +65,12 @@ alter table public.call_signals enable row level security;
 alter table public.call_candidates enable row level security;
 alter table public.push_subscriptions enable row level security;
 
+create or replace function public.is_conversation_member(cid uuid, uid uuid)
+returns boolean language sql stable security definer set search_path=public as $
+  select exists(select 1 from public.conversation_members where conversation_id=cid and user_id=uid)
+$;
+grant execute on function public.is_conversation_member(uuid,uuid) to authenticated;
+
 -- Recreate policies safely on reruns.
 drop policy if exists "profiles visible to authenticated" on public.profiles;
 create policy "profiles visible to authenticated" on public.profiles for select to authenticated using (true);
@@ -74,16 +80,16 @@ drop policy if exists "profile owner update" on public.profiles;
 create policy "profile owner update" on public.profiles for update to authenticated using (auth.uid()=id) with check (auth.uid()=id);
 
 drop policy if exists "members view conversations" on public.conversations;
-create policy "members view conversations" on public.conversations for select to authenticated using (exists(select 1 from public.conversation_members m where m.conversation_id=id and m.user_id=auth.uid()));
+create policy "members view conversations" on public.conversations for select to authenticated using (public.is_conversation_member(id,auth.uid()));
 drop policy if exists "members view membership" on public.conversation_members;
-create policy "members view membership" on public.conversation_members for select to authenticated using (user_id=auth.uid() or exists(select 1 from public.conversation_members m where m.conversation_id=conversation_id and m.user_id=auth.uid()));
+create policy "members view membership" on public.conversation_members for select to authenticated using (user_id=auth.uid() or public.is_conversation_member(conversation_id,auth.uid()));
 drop policy if exists "members insert membership" on public.conversation_members;
 create policy "members insert membership" on public.conversation_members for insert to authenticated with check (user_id=auth.uid());
 
 drop policy if exists "members read messages" on public.messages;
-create policy "members read messages" on public.messages for select to authenticated using (exists(select 1 from public.conversation_members m where m.conversation_id=messages.conversation_id and m.user_id=auth.uid()));
+create policy "members read messages" on public.messages for select to authenticated using (public.is_conversation_member(messages.conversation_id,auth.uid()));
 drop policy if exists "members send messages" on public.messages;
-create policy "members send messages" on public.messages for insert to authenticated with check (sender_id=auth.uid() and exists(select 1 from public.conversation_members m where m.conversation_id=messages.conversation_id and m.user_id=auth.uid()));
+create policy "members send messages" on public.messages for insert to authenticated with check (sender_id=auth.uid() and public.is_conversation_member(messages.conversation_id,auth.uid()));
 drop policy if exists "members read receipts" on public.message_reads;
 create policy "members read receipts" on public.message_reads for select to authenticated using (user_id=auth.uid() or exists(select 1 from public.messages msg join public.conversation_members m on m.conversation_id=msg.conversation_id where msg.id=message_reads.message_id and m.user_id=auth.uid()));
 drop policy if exists "own read receipts" on public.message_reads;
@@ -113,7 +119,7 @@ begin
  select c.id into existing_id from public.conversations c
  join public.conversation_members a on a.conversation_id=c.id and a.user_id=auth.uid()
  join public.conversation_members b on b.conversation_id=c.id and b.user_id=other_user
- group by c.id having count(*)=2 limit 1;
+ group by c.id limit 1;
  if existing_id is not null then return existing_id; end if;
  insert into public.conversations default values returning id into new_id;
  insert into public.conversation_members(conversation_id,user_id) values(new_id,auth.uid()),(new_id,other_user);
