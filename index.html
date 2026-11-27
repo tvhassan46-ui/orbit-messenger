@@ -141,12 +141,16 @@ body.light #emojiPanel,body.light #stickerPanel{background:#fff;border-color:#dd
 #settingsmodal #profileform{padding:0 20px}
 @media(max-width:760px){#settingsmodal .modal{max-height:92dvh;width:min(540px,100%);padding-bottom:env(safe-area-inset-bottom)}}
 </style><style id="hello-anime-wind-vfx">
-.wind-vfx{position:fixed;pointer-events:none;z-index:99999;inset:auto;overflow:visible;width:0;height:0}
-.wind-vfx i{position:absolute;display:block;height:2px;width:var(--len,64px);border-radius:99px;background:linear-gradient(90deg,transparent,#bdeaff,#fff);box-shadow:0 0 8px #a9e7ff;opacity:0;transform-origin:right center;animation:helloWind .48s cubic-bezier(.2,.8,.3,1) forwards}
-.wind-vfx i:nth-child(2){height:1px;animation-delay:.025s;opacity:0}
-.wind-vfx i:nth-child(3){height:3px;animation-delay:.06s}
-@keyframes helloWind{0%{opacity:0;transform:translate(var(--sx),var(--sy)) rotate(var(--rot)) scaleX(.15)}20%{opacity:.95}100%{opacity:0;transform:translate(calc(var(--sx) + var(--dx)),calc(var(--sy) + var(--dy))) rotate(var(--rot)) scaleX(1.4)}}
-@media(prefers-reduced-motion:reduce){.wind-vfx i{animation-duration:.12s}}
+/* Subtle anime-inspired wind energy directly on interactive buttons */
+button,.settingsitem,.entry{position:relative;overflow:hidden}
+button::after,.settingsitem::after,.entry::after{content:"";position:absolute;inset:-40%;pointer-events:none;opacity:0;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.18) 46%,rgba(190,235,255,.7) 50%,rgba(255,255,255,.16) 54%,transparent 62%);transform:translateX(-130%) rotate(8deg)}
+button:active,.settingsitem:active,.entry:active{transform:scale(.975);filter:brightness(1.12)}
+button:active::after,.settingsitem:active::after,.entry:active::after{opacity:1;animation:helloWindSwipe .42s ease-out}
+button.hello-wind,.settingsitem.hello-wind,.entry.hello-wind{animation:helloWindPulse .55s cubic-bezier(.2,.8,.3,1)}
+button.hello-wind::after,.settingsitem.hello-wind::after,.entry.hello-wind::after{opacity:1;animation:helloWindSwipe .55s ease-out}
+@keyframes helloWindSwipe{0%{transform:translateX(-130%) rotate(8deg);opacity:0}35%{opacity:.85}100%{transform:translateX(130%) rotate(8deg);opacity:0}}
+@keyframes helloWindPulse{0%{box-shadow:0 0 0 rgba(170,225,255,0)}35%{box-shadow:0 0 18px rgba(170,225,255,.35)}100%{box-shadow:0 0 0 rgba(170,225,255,0)}}
+@media(prefers-reduced-motion:reduce){button.hello-wind,.settingsitem.hello-wind,.entry.hello-wind{animation:none}}
 </style></head><body><div id="helloSplash" aria-label="Hello"><div class="helloSun" id="helloSun"></div><div class="helloInner"><div class="helloWord">hello.</div><div class="helloTag">A little closer, every day</div></div></div>
 
 <!-- From Uiverse.io by micaelgomestavares - https://uiverse.io/micaelgomestavares/dull-walrus-66
@@ -385,6 +389,5 @@ applyTheme();boot();setTimeout(async()=>{try{const last=sessionStorage.getItem('
 (()=>{const canvas=document.getElementById('callSharksCanvas');if(!canvas)return;const ctx=canvas.getContext('2d');let w=0,h=0,raf=0,last=0;
 const swimmers=[{x:-80,y:70,s:1,dir:1},{x:300,y:210,s:.75,dir:-1},{x:-180,y:330,s:1.15,dir:1},{x:150,y:450,s:.65,dir:-1}];
 const art=['<><((°>','<><((°>','<><((°>'];function resize(){const r=canvas.parentElement.getBoundingClientRect();w=canvas.width=Math.max(1,r.width);h=canvas.height=Math.max(1,r.height)}function frame(t){raf=requestAnimationFrame(frame);if(t-last<45)return;last=t;if(document.getElementById('callModal').classList.contains('hidden'))return;resize();ctx.clearRect(0,0,w,h);ctx.font='16px monospace';ctx.fillStyle='#9c9c9c';ctx.shadowColor='#f2f2f2';ctx.shadowBlur=8;swimmers.forEach((a,i)=>{a.x+=a.dir*(.35+a.s*.45);if(a.dir>0&&a.x>w+100)a.x=-120;if(a.dir<0&&a.x<-130)a.x=w+80;const text=a.dir>0?art[i%art.length]:'<°))><';ctx.save();ctx.translate(a.x,a.y+Math.sin(t/800+i)*15);ctx.scale(a.s, a.s);ctx.fillText(text,0,0);ctx.restore()});ctx.shadowBlur=0;}resize();window.addEventListener('resize',resize);raf=requestAnimationFrame(frame);})();</script><script id="hello-anime-wind-vfx-script">
-(()=>{let last=0;function burst(el){const now=Date.now();if(now-last<70)return;last=now;const r=el.getBoundingClientRect();const x=Math.min(innerWidth-8,Math.max(8,r.left+r.width/2)),y=Math.min(innerHeight-8,Math.max(8,r.top+r.height/2));const box=document.createElement('div');box.className='wind-vfx';box.style.left=x+'px';box.style.top=y+'px';for(let n=0;n<3;n++){const line=document.createElement('i');line.style.setProperty('--len',(35+Math.random()*55)+'px');line.style.setProperty('--sx',(-10+Math.random()*20)+'px');line.style.setProperty('--sy',(-15+Math.random()*30)+'px');line.style.setProperty('--dx',(35+Math.random()*55)+'px');line.style.setProperty('--dy',(-22+Math.random()*44)+'px');line.style.setProperty('--rot',(-25+Math.random()*50)+'deg');box.appendChild(line)}document.body.appendChild(box);setTimeout(()=>box.remove(),650)}
-document.addEventListener('click',e=>{const el=e.target.closest('button,.settingsitem,.entry,[role="button"],.navbottom button');if(!el||el.disabled||el.closest('#callSharksCanvas'))return;if(el.matches('input,textarea')||el.closest('input,textarea'))return;burst(el)},true)})();
+(()=>{document.addEventListener('click',e=>{const el=e.target.closest('button,.settingsitem,.entry,[role="button"]');if(!el||el.disabled||el.matches('input,textarea')||el.closest('input,textarea'))return;el.classList.remove('hello-wind');void el.offsetWidth;el.classList.add('hello-wind');setTimeout(()=>el.classList.remove('hello-wind'),600)},true)})();
 </script></body></html>
