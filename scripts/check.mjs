@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 const html=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 let failed=false;
-for(const [i,m] of [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].entries()){
+for(const [i,m] of [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].entries()){
  const code=m[1]; if(!code.trim())continue;
  try{new vm.Script(code,{filename:'index.html script '+(i+1)});}catch(e){failed=true;console.error(e.stack.split('\n').slice(0,5).join('\n'));}
 }
