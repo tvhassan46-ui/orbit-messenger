@@ -256,7 +256,7 @@ let lastError;for(const username of [wanted,wanted.slice(0,17)+'_'+tag.slice(0,6
 async function enterApp(account){user=account;await ensureProfile(user);showApp();await Promise.all([loadChats(),loadProfile()])}
 function showApp(){appUserId=user.id;say('');$('password').value='';$('confirmPassword').value='';$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('who').textContent=user.email||user.id;applyTheme();startPresence();startInbox();refreshPushState()}
 function setAuthBusy(on){authBusy=on;['signin','signup','forgot','resend','backlogin'].forEach(id=>$(id).disabled=on)}
-async function authAction(progress,fn){if(authBusy)return;setAuthBusy(true);say(progress);try{connect();await fn()}catch(e){console.error('Authentication:',e?.message||e);say(friendly(e),'error');if(/email not confirmed/i.test(e?.message||''))$('resend').classList.remove('hidden')}finally{setAuthBusy(false)}}
+async function authAction(progress,fn){if(authBusy)return;setAuthBusy(true);let loader=document.getElementById('helloAuthLoader');if(!loader){loader=document.createElement('div');loader.id='helloAuthLoader';loader.innerHTML='<div class="hello-spinner"></div><div id="helloLoaderLabel"></div>';loader.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(10,10,10,.88);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px;color:white;font:15px system-ui';document.body.appendChild(loader);const sp=loader.querySelector('.hello-spinner');sp.style.cssText='width:42px;height:42px;border:3px solid #555;border-top-color:white;border-radius:50%;animation:helloSpin .75s linear infinite';const st=document.createElement('style');st.textContent='@keyframes helloSpin{to{transform:rotate(360deg)}}';document.head.appendChild(st)}document.getElementById('helloLoaderLabel').textContent=progress||'Please wait…';loader.style.display='flex';say(progress);try{connect();await fn()}catch(e){console.error('Authentication:',e?.message||e);say(friendly(e),'error');if(/email not confirmed/i.test(e?.message||''))$('resend').classList.remove('hidden')}finally{setAuthBusy(false);if(loader)loader.style.display='none'}}
 function setAuthMode(mode){authMode=mode;const signup=mode==='signup',recovery=mode==='recovery',login=mode==='login';
 $('signupfields').classList.toggle('hidden',!signup);$('confirmPasswordWrap').classList.toggle('hidden',login);$('emailWrap').classList.toggle('hidden',recovery);
 $('authTitle').textContent=signup?'Register':recovery?'New password':'Sign in';
@@ -492,22 +492,4 @@ async function helloOpenGroup(gid){
  async function load(){const box=document.getElementById('helloGroupMsgs');if(!box)return;const {data,error}=await sb.from('hello_group_messages').select('id,sender_id,content,created_at').eq('group_id',gid).order('created_at').limit(200);if(error){box.textContent=error.message;return}const rows=data||[],ids=[...new Set(rows.map(x=>x.sender_id))];let p=[];if(ids.length){const res=await sb.from('profiles').select('id,username,display_name,avatar_url').in('id',ids);p=res.data||[]}box.innerHTML=rows.map(m=>{let sender=p.find(x=>x.id===m.sender_id);return '<div style="padding:10px;margin:7px 0;background:'+(m.sender_id===user.id?'#343434':'#252525')+';border-radius:14px;max-width:90%;'+(m.sender_id===user.id?'margin-left:auto':'')+'"><small>'+esc(sender?.display_name||sender?.username||'Member')+'</small><div>'+esc(m.content)+'</div><small>'+new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</small></div>'}).join('')||'<p class="muted">Say hello 👋</p>';box.scrollTop=box.scrollHeight}
  await load();document.getElementById('helloGroupForm').onsubmit=async e=>{e.preventDefault();let input=document.getElementById('helloGroupText'),content=input.value.trim();if(!content)return;input.value='';const {error}=await sb.from('hello_group_messages').insert({group_id:gid,sender_id:user.id,content});if(error){alert(error.message);return}await load()};
 }
-</script><style id="hello-auth-loading-fix">
-#helloSplash{display:none!important}
-#helloAuthLoader{position:fixed;inset:0;z-index:100000;background:rgba(10,10,10,.84);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;color:#fff;font:15px system-ui}
-#helloAuthLoader.hidden{display:none!important}.hello-spinner{width:42px;height:42px;border:3px solid #555;border-top-color:#fff;border-radius:50%;animation:helloSpin .75s linear infinite}
-@keyframes helloSpin{to{transform:rotate(360deg)}}
-#signin.hello-submit{width:100%;flex:unset;background:#171717!important;color:white!important;border-radius:12px;min-height:48px}
-</style>
-<script id="hello-auth-loading-fix-js">
-(()=>{const overlay=document.createElement('div');overlay.id='helloAuthLoader';overlay.className='hidden';overlay.innerHTML='<span class="hello-spinner"></span><span id="helloLoaderLabel">Please wait…</span>';document.body.appendChild(overlay);
-function show(label){document.getElementById('helloLoaderLabel').textContent=label;overlay.classList.remove('hidden')}
-function hide(){overlay.classList.add('hidden')}
-const originalSignIn=window.signIn,originalCreate=window.createAccount,originalUpdate=window.updatePassword;
-window.signIn=async function(){show('Signing in…');try{return await originalSignIn()}finally{hide()}};
-window.createAccount=async function(){show('Creating account…');try{return await originalCreateAccount()}finally{hide()}};
-window.updatePassword=async function(){show('Updating password…');try{return await originalUpdate()}finally{hide()}};
-document.getElementById('signin')?.addEventListener('click',()=>{show('Signing in…');setTimeout(()=>{if(!document.getElementById('app')?.classList.contains('hidden'))hide();else if(document.getElementById('authmsg')?.textContent)hide();else setTimeout(hide,12000)},12000)},{capture:true});
-document.getElementById('signup')?.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Register'){show('Creating account…');setTimeout(hide,12000)}});
-})();
 </script></body></html>
