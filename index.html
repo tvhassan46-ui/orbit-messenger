@@ -494,4 +494,17 @@ async function helloOpenGroup(gid){
 <script id="hello-auth-button-guard">
 (()=>{const sign=document.getElementById('signin'),create=document.getElementById('signup');if(!sign||!create)return;sign.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Sign in'&&!document.getElementById('email')?.value.trim())document.getElementById('email')?.focus()},true);create.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Sign in'){document.getElementById('authTitle').textContent='Register';document.getElementById('authintro').textContent='Create your hello account to get started.';document.getElementById('signupfields')?.classList.remove('hidden');document.getElementById('confirmPasswordWrap')?.classList.remove('hidden');sign.classList.add('hidden');create.textContent='Submit';document.getElementById('firstname')?.focus()}},true)})();
 </script>
+
+<script id="hello-auth-back-navigation-fix">
+(()=>{
+ const back=document.getElementById('backlogin');
+ const create=document.getElementById('signup');
+ const title=document.getElementById('authTitle');
+ if(!back||!create||!title)return;
+ const ensureBack=()=>{if(title.textContent.trim()==='Register'){back.classList.remove('hidden');back.style.display='inline-flex';back.style.visibility='visible';back.style.opacity='1';back.style.pointerEvents='auto';back.textContent='Already have an account? Sign in';}};
+ create.addEventListener('click',()=>{setTimeout(ensureBack,0);setTimeout(ensureBack,80)},true);
+ const observer=new MutationObserver(ensureBack);observer.observe(title,{childList:true,characterData:true,subtree:true});
+ back.addEventListener('click',()=>{setTimeout(()=>{if(title.textContent.trim()==='Sign in')back.style.display='none'},0)});
+})();
+</script>
 </body></html>
