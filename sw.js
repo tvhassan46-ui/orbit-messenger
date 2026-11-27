@@ -1,9 +1,9 @@
-const CACHE_NAME="orbit-shell-v1";
+const CACHE_NAME="orbit-shell-v2";
 const CORE=["/","/manifest.json","/icon.svg"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener("fetch",event=>{if(event.request.method!=="GET"||new URL(event.request.url).origin!==self.location.origin)return;event.respondWith(fetch(event.request).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(event.request,copy))}return res}).catch(()=>caches.match(event.request).then(r=>r||caches.match("/"))))});
-self.addEventListener("notificationclick",event=>{event.notification.close();event.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(list=>{for(const c of list){if("focus" in c)return c.focus()}return clients.openWindow("/") }))});
+// Network first. API responses are never cached; only page loads fall back to the cached app shell.
+self.addEventListener("fetch",event=>{const url=new URL(event.request.url);if(event.request.method!=="GET"||url.origin!==self.location.origin||url.pathname.startsWith("/api/"))return;event.respondWith(fetch(event.request).then(res=>{if(res.ok){const copy=res.clone();caches.open(CACHE_NAME).then(c=>c.put(event.request,copy))}return res}).catch(async()=>(await caches.match(event.request))||(event.request.mode==="navigate"&&(await caches.match("/")))||Response.error()))});
 
-self.addEventListener('push',event=>{let data={};try{data=event.data?.json()||{}}catch(_){data={body:event.data?.text()}}event.waitUntil(self.registration.showNotification(data.title||'hello', {body:data.body||'New message',icon:'/icon.svg',data:{url:data.url||'/'},vibrate:[120,60,120]}));});
-self.addEventListener('notificationclick',event=>{event.notification.close();const url=event.notification.data?.url||'/';event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{for(const c of list){if('focus' in c){c.navigate(url);return c.focus()}}return clients.openWindow(url)}));});
+self.addEventListener('push',event=>{let data={};try{data=event.data?.json()||{}}catch(_){data={body:event.data?.text()}}event.waitUntil(self.registration.showNotification(data.title||'hello', {body:data.body||'New message',icon:'/icon.svg',tag:data.tag,data:{url:data.url||'/'},vibrate:[120,60,120]}));});
+self.addEventListener('notificationclick',event=>{event.notification.close();const url=event.notification.data?.url||'/';event.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{const open=list.find(c=>'focus' in c);return open?open.focus():clients.openWindow(url)}));});
