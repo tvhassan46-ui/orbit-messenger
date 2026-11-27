@@ -507,4 +507,8 @@ async function helloOpenGroup(gid){
  back.addEventListener('click',()=>{setTimeout(()=>{if(title.textContent.trim()==='Sign in')back.style.display='none'},0)});
 })();
 </script>
+
+<script id="hello-backlogin-direct-fix">
+(()=>{const b=document.getElementById('backlogin');if(!b)return;b.addEventListener('click',function(e){e.preventDefault();e.stopImmediatePropagation();try{setAuthMode('login');document.getElementById('email')?.focus();}catch(err){console.error('Back to sign in failed',err);const t=document.getElementById('authTitle');if(t)t.textContent='Sign in';document.getElementById('signupfields')?.classList.add('hidden');document.getElementById('confirmPasswordWrap')?.classList.add('hidden');document.getElementById('signin')?.classList.remove('hidden');document.getElementById('signup')?.classList.remove('hidden');b.classList.add('hidden');}},true);})();
+</script>
 </body></html>
