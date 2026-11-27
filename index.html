@@ -259,7 +259,7 @@ function setAuthMode(mode){authMode=mode;const signup=mode==='signup',recovery=m
 $('signupfields').classList.toggle('hidden',!signup);$('confirmPasswordWrap').classList.toggle('hidden',login);$('emailWrap').classList.toggle('hidden',recovery);
 $('authTitle').textContent=signup?'Register':recovery?'New password':'Sign in';
 $('authintro').textContent=signup?'Create your hello account to get started.':recovery?'Choose a new password for your account.':'Welcome back. Sign in to continue.';
-$('signin').classList.toggle('hidden',signup);$('signin').textContent=recovery?'Update password':'Sign in';$('signup').classList.toggle('hidden',recovery);$('signup').textContent=signup?'Submit':'Create account';
+$('signin').classList.toggle('hidden',signup);$('signin').textContent=recovery?'Update password':'Sign in';$('signup').classList.toggle('hidden',recovery);$('signup').textContent=signup?'Create Account':'Create account';
 $('backlogin').classList.toggle('hidden',login);$('backlogin').textContent=recovery?'Cancel':'Already have an account? Sign in';$('loginOptions').classList.toggle('hidden',!login);$('resend').classList.add('hidden');
 $('password').autocomplete=login?'current-password':'new-password';say('')}
 function showRecovery(){$('app').classList.add('hidden');$('auth').classList.remove('hidden');setAuthMode('recovery')}
@@ -491,9 +491,7 @@ async function helloOpenGroup(gid){
  await load();document.getElementById('helloGroupForm').onsubmit=async e=>{e.preventDefault();let input=document.getElementById('helloGroupText'),content=input.value.trim();if(!content)return;input.value='';const {error}=await sb.from('hello_group_messages').insert({group_id:gid,sender_id:user.id,content});if(error){alert(error.message);return}await load()};
 }
 </script>
-<script id="hello-auth-button-guard">
-(()=>{const sign=document.getElementById('signin'),create=document.getElementById('signup');if(!sign||!create)return;sign.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Sign in'&&!document.getElementById('email')?.value.trim())document.getElementById('email')?.focus()},true);create.addEventListener('click',()=>{if(document.getElementById('authTitle')?.textContent==='Sign in'){document.getElementById('authTitle').textContent='Register';document.getElementById('authintro').textContent='Create your hello account to get started.';document.getElementById('signupfields')?.classList.remove('hidden');document.getElementById('confirmPasswordWrap')?.classList.remove('hidden');sign.classList.add('hidden');create.textContent='Submit';document.getElementById('firstname')?.focus()}},true)})();
-</script>
+<!-- Removed legacy capture-phase auth guard; core setAuthMode handler controls transitions. -->
 
 <script id="hello-auth-back-navigation-fix">
 (()=>{
