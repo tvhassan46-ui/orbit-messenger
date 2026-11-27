@@ -511,4 +511,7 @@ async function helloOpenGroup(gid){
 <script id="hello-pwa-auto-update">
 (()=>{if(!('serviceWorker' in navigator))return;let hadController=!!navigator.serviceWorker.controller; navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController)location.reload();hadController=true});window.addEventListener('load',async()=>{try{const reg=await navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'});await reg.update();if(reg.waiting)reg.waiting.postMessage({type:'SKIP_WAITING'});reg.addEventListener('updatefound',()=>{const nw=reg.installing;if(!nw)return;nw.addEventListener('statechange',()=>{if(nw.state==='installed'&&navigator.serviceWorker.controller)nw.postMessage({type:'SKIP_WAITING'})})})}catch(e){console.warn('PWA update check:',e)}})})();
 </script>
-</body></html>
+<style id="hello-daisy-chat-bubble">
+/* DaisyUI-inspired chat bubble styling, adapted to hello's existing message DOM (visual-only). */
+.messages .bubble{position:relative;max-width:min(75%,520px);padding:11px 14px;background:#292929;color:#f1f1f1;border:1px solid #353535;border-radius:18px 18px 18px 5px;box-shadow:none;white-space:pre-wrap;overflow-wrap:anywhere;align-self:flex-start}.messages .bubble.mine{align-self:flex-end;background:#e9e9e9;color:#161616;border-color:#e9e9e9;border-radius:18px 18px 5px 18px}.messages .bubble .meta{color:inherit;opacity:.62}.messages .bubble .ticks{color:inherit}.messages .bubble .readface{border-color:currentColor}@media(max-width:760px){.messages .bubble{max-width:85%}}
+</style></body></html>
