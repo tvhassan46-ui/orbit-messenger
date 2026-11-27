@@ -468,34 +468,32 @@ function helloShowSaved(){const old=document.querySelector('.hello-saved-modal')
 </script>
 <script id="hello-functional-groups">
 async function helloRenderGroups(){
- const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view"><h2>Groups</h2><button id="helloNewGroup">＋ Create group</button><div id="helloGroupList" style="text-align:left;margin-top:14px"></div></div>';
- document.getElementById('helloNewGroup').onclick=helloCreateGroup;
- await helloFetchGroups();
+ const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view" style="text-align:left"><div style="display:flex;align-items:center;justify-content:space-between"><h2>Groups</h2><button id="helloNewGroup">＋ New</button></div><div id="helloGroupList" style="margin-top:14px"></div></div>';
+ document.getElementById('helloNewGroup').onclick=helloCreateGroup;await helloFetchGroups();
 }
 async function helloFetchGroups(){
  const box=document.getElementById('helloGroupList');if(!box)return;
+ box.innerHTML='<p class="muted">Loading groups…</p>';
  try{const {data:mem,error}=await sb.from('hello_group_members').select('group_id').eq('user_id',user.id);if(error)throw error;
- const ids=(mem||[]).map(x=>x.group_id);if(!ids.length){box.innerHTML='<p class="muted">No groups yet. Create one.</p>';return}
+ const ids=(mem||[]).map(x=>x.group_id);if(!ids.length){box.innerHTML='<p class="muted">No groups yet.</p>';return}
  const {data,error:e}=await sb.from('hello_groups').select('id,name,created_at').in('id',ids).order('created_at',{ascending:false});if(e)throw e;
- box.innerHTML=(data||[]).map(g=>'<button class="secondary" style="display:block;width:100%;margin:8px 0;text-align:left" data-group="'+esc(g.id)+'">♧ '+esc(g.name)+'</button>').join('');
+ box.innerHTML=(data||[]).map(g=>'<button class="secondary" style="display:flex;align-items:center;gap:12px;width:100%;margin:8px 0;text-align:left;padding:14px;border-radius:15px" data-group="'+esc(g.id)+'"><span style="font-size:24px">👥</span><span>'+esc(g.name)+'</span></button>').join('');
  box.querySelectorAll('[data-group]').forEach(b=>b.onclick=()=>helloOpenGroup(b.dataset.group));
- }catch(e){box.innerHTML='<p>Groups load error: '+esc(e.message)+'</p>'}
+ }catch(e){box.innerHTML='<p>Groups error: '+esc(e.message)+'</p>'}
 }
 async function helloCreateGroup(){
- const name=prompt('Group name:');if(!name?.trim())return;
- const idsRaw=prompt('Optional: member user IDs (UUIDs), separated by commas. Leave blank for now:')||'';
- const ids=idsRaw.split(',').map(x=>x.trim()).filter(Boolean);
- try{const {data,error}=await sb.rpc('hello_create_group',{group_name:name.trim(),member_ids:ids});if(error)throw error;await helloFetchGroups();alert('Group created!');}
- catch(e){alert('Could not create group: '+e.message)}
+ let profiles=[];try{const {data,error}=await sb.from('profiles').select('id,username,display_name,avatar_url').neq('id',user.id).order('display_name').limit(200);if(error)throw error;profiles=data||[]}catch(e){alert('Could not load contacts: '+e.message);return}
+ const back=document.createElement('div');back.className='modalback';back.id='helloGroupCreateModal';
+ back.innerHTML='<div class="modal" style="width:min(480px,100%)"><h2>Create group</h2><label>Group name<input id="helloGroupName" placeholder="Group name" maxlength="60"></label><input id="helloGroupSearch" placeholder="Search contacts…" style="margin:8px 0"><div id="helloGroupPickList" style="max-height:42vh;overflow:auto"></div><div id="helloGroupSelected" class="muted" style="padding:8px">0 selected</div><div class="modalactions"><button class="secondary" id="helloGroupCancel">Cancel</button><button id="helloGroupCreateBtn">Create</button></div></div>';
+ document.body.appendChild(back);let chosen=new Set();
+ const render=()=>{let q=(document.getElementById('helloGroupSearch').value||'').toLowerCase();let list=document.getElementById('helloGroupPickList');list.innerHTML=profiles.filter(p=>(p.display_name||p.username||'').toLowerCase().includes(q)||(p.username||'').toLowerCase().includes(q)).map(p=>'<label style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--line);cursor:pointer"><input type="checkbox" data-pick="'+esc(p.id)+'" '+(chosen.has(p.id)?'checked':'')+' style="width:auto"><span class="avatar" style="width:40px;height:40px">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="">':esc((p.display_name||p.username||'?').slice(0,1)))+'</span><span style="flex:1">'+esc(p.display_name||p.username||'User')+'<small>@'+esc(p.username||'')+'</small></span></label>').join('')||'<p class="muted">No contacts found.</p>';list.querySelectorAll('[data-pick]').forEach(x=>x.onchange=()=>{x.checked?chosen.add(x.dataset.pick):chosen.delete(x.dataset.pick);document.getElementById('helloGroupSelected').textContent=chosen.size+' selected'});document.getElementById('helloGroupSelected').textContent=chosen.size+' selected'};
+ document.getElementById('helloGroupSearch').oninput=render;render();document.getElementById('helloGroupCancel').onclick=()=>back.remove();back.onclick=e=>{if(e.target===back)back.remove()};
+ document.getElementById('helloGroupCreateBtn').onclick=async()=>{let name=document.getElementById('helloGroupName').value.trim();if(!name){alert('Enter a group name.');return}let b=document.getElementById('helloGroupCreateBtn');b.disabled=true;b.textContent='Creating…';try{const {data,error}=await sb.rpc('hello_create_group',{group_name:name,member_ids:[...chosen]});if(error)throw error;back.remove();await helloFetchGroups();alert('Group created!')}catch(e){alert('Could not create group: '+e.message);b.disabled=false;b.textContent='Create'}};
 }
 async function helloOpenGroup(gid){
- const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view" style="text-align:left"><button class="secondary" id="helloGroupBack">← Groups</button><h2 id="helloGroupTitle">Group chat</h2><div id="helloGroupMsgs" style="max-height:55vh;overflow:auto"></div><form id="helloGroupForm" class="row"><input id="helloGroupText" placeholder="Message group…"><button>Send</button></form></div>';
- document.getElementById('helloGroupBack').onclick=helloRenderGroups;
- const {data:g,error}=await sb.from('hello_groups').select('name').eq('id',gid).single();if(error){alert(error.message);return}document.getElementById('helloGroupTitle').textContent=g.name;
- async function load(){const {data,error}=await sb.from('hello_group_messages').select('id,sender_id,content,created_at').eq('group_id',gid).order('created_at').limit(200);if(error){document.getElementById('helloGroupMsgs').textContent=error.message;return}
- const rows=data||[];const ids=[...new Set(rows.map(x=>x.sender_id))];let p=[];if(ids.length){const res=await sb.from('profiles').select('id,username,display_name').in('id',ids);p=res.data||[]}
- document.getElementById('helloGroupMsgs').innerHTML=rows.map(m=>'<div style="padding:9px;margin:7px 0;background:'+(m.sender_id===user.id?'#454545':'#292929')+';border-radius:12px"><small>'+esc(p.find(x=>x.id===m.sender_id)?.display_name||p.find(x=>x.id===m.sender_id)?.username||'Member')+'</small><div>'+esc(m.content)+'</div></div>').join('')||'<p class="muted">Say hello 👋</p>';const el=document.getElementById('helloGroupMsgs');el.scrollTop=el.scrollHeight}
- await load();
- document.getElementById('helloGroupForm').onsubmit=async e=>{e.preventDefault();const input=document.getElementById('helloGroupText'),content=input.value.trim();if(!content)return;input.value='';const {error}=await sb.from('hello_group_messages').insert({group_id:gid,sender_id:user.id,content});if(error){alert(error.message);return}await load()};
+ const list=document.getElementById('list');list.innerHTML='<div class="hello-nav-view" style="text-align:left;display:flex;flex-direction:column;height:100%"><button class="secondary" id="helloGroupBack" style="align-self:flex-start">← Groups</button><h2 id="helloGroupTitle">Group</h2><div id="helloGroupMsgs" style="flex:1;max-height:60vh;overflow:auto;padding:6px"></div><form id="helloGroupForm" class="row"><input id="helloGroupText" placeholder="Message group…" autocomplete="off"><button>Send</button></form></div>';
+ document.getElementById('helloGroupBack').onclick=helloRenderGroups;const {data:g,error}=await sb.from('hello_groups').select('name').eq('id',gid).single();if(error){alert(error.message);return}document.getElementById('helloGroupTitle').textContent=g.name;
+ async function load(){const box=document.getElementById('helloGroupMsgs');if(!box)return;const {data,error}=await sb.from('hello_group_messages').select('id,sender_id,content,created_at').eq('group_id',gid).order('created_at').limit(200);if(error){box.textContent=error.message;return}const rows=data||[],ids=[...new Set(rows.map(x=>x.sender_id))];let p=[];if(ids.length){const res=await sb.from('profiles').select('id,username,display_name,avatar_url').in('id',ids);p=res.data||[]}box.innerHTML=rows.map(m=>{let sender=p.find(x=>x.id===m.sender_id);return '<div style="padding:10px;margin:7px 0;background:'+(m.sender_id===user.id?'#343434':'#252525')+';border-radius:14px;max-width:90%;'+(m.sender_id===user.id?'margin-left:auto':'')+'"><small>'+esc(sender?.display_name||sender?.username||'Member')+'</small><div>'+esc(m.content)+'</div><small>'+new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'</small></div>'}).join('')||'<p class="muted">Say hello 👋</p>';box.scrollTop=box.scrollHeight}
+ await load();document.getElementById('helloGroupForm').onsubmit=async e=>{e.preventDefault();let input=document.getElementById('helloGroupText'),content=input.value.trim();if(!content)return;input.value='';const {error}=await sb.from('hello_group_messages').insert({group_id:gid,sender_id:user.id,content});if(error){alert(error.message);return}await load()};
 }
 </script></body></html>
