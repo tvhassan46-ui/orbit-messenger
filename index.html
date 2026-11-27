@@ -165,8 +165,8 @@ function toggleOnlineStatus(){manualOnline=!manualOnline;$('settingsmsg').textCo
 function isOnline(uid){if(!uid||!presenceChannel)return false;const state=presenceChannel.presenceState();return Object.keys(state).some(k=>(state[k]||[]).some(v=>v.user_id===uid&&v.online!==false))}function startPresence(){if(presenceChannel)sb.removeChannel(presenceChannel);presenceChannel=sb.channel('orbit-presence',{config:{presence:{key:user.id}}});presenceChannel.on('presence',{event:'sync'},()=>{const s=$('chatstatus');if(s&&active){const c=chats.find(x=>x.id===active);s.textContent=isOnline(c?.profile?.id)?'● Online':'Offline'}}).subscribe(async status=>{if(status==='SUBSCRIBED')await presenceChannel.track({user_id:user.id,online:manualOnline,last_seen:new Date().toISOString()})})}
 sb?.auth?.onAuthStateChange((event,session)=>{if(session&&session.user){user=session.user}});
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(e=>console.warn("SW registration",e)))}\n
-// Hello intro splash
-(()=>{const s=document.getElementById('helloSplash');if(!s)return;if(sessionStorage.getItem('orbitHelloSeen')){s.remove();return}sessionStorage.setItem('orbitHelloSeen','1');requestAnimationFrame(()=>document.getElementById('helloSun')?.classList.add('expand'));setTimeout(()=>s.classList.add('hide'),2300);setTimeout(()=>s.remove(),3200)})();
+// Reliable Hello splash dismissal (avoid storage blocking the login UI)
+(()=>{const splash=document.getElementById('helloSplash');if(!splash)return;try{document.getElementById('helloSun')?.classList.add('expand')}catch(_){};const dismiss=()=>{splash.classList.add('hide');setTimeout(()=>{try{splash.remove()}catch(_){}},900)};setTimeout(dismiss,1800);setTimeout(dismiss,5000)})();
 boot();setInterval(()=>{if(user)watchIncomingCalls()},5000);
 
 
