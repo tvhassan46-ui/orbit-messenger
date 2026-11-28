@@ -592,3 +592,54 @@ document.getElementById('closemodal').onclick=()=>{if(page)back();closeSettings(
 <script id="hello-message-longpress">(()=>{let timer=null,target=null,menu=null,holdTriggered=false,startX=0,startY=0;const duration=500;function clear(){if(timer)clearTimeout(timer);timer=null;if(target){target.classList.remove('hello-holding');target.querySelector('.hello-hold-progress')?.remove()}target=null}function closeMenu(){menu?.remove();menu=null}function copyContent(el){const text=(el.innerText||el.textContent||'').trim();if(text)navigator.clipboard?.writeText(text).catch(()=>{})}function show(el){closeMenu();const id=el.dataset.helloMessage;menu=document.createElement('div');menu.className='hello-hold-actions';menu.innerHTML='<button type="button" data-action="copy">Copy</button><button type="button" data-action="save">Save</button><button type="button" data-action="close">Close</button>';document.body.appendChild(menu);const r=el.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(window.innerWidth-menu.offsetWidth-8,r.left))+'px';menu.style.top=Math.max(8,Math.min(window.innerHeight-menu.offsetHeight-8,r.top- menu.offsetHeight-8))+'px';menu.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;if(b.dataset.action==='copy')copyContent(el);if(b.dataset.action==='save'){const check=el.querySelector('[data-hello-save]');if(check){check.checked=!check.checked;check.dispatchEvent(new Event('change',{bubbles:true}))}else alert('Saving is not available for this message type yet.')}closeMenu()});}function begin(el,e){if(e.target.closest('button,a,input,label'))return;target=el;holdTriggered=false;startX=e.clientX??0;startY=e.clientY??0;const fill=document.createElement('div');fill.className='hello-hold-progress';el.appendChild(fill);el.classList.add('hello-holding');timer=setTimeout(()=>{holdTriggered=true;el.classList.remove('hello-holding');fill.remove();show(el)},duration)}document.addEventListener('pointerdown',e=>{const el=e.target.closest('.messages .bubble,[data-hello-message]');if(!el)return;begin(el,e)});document.addEventListener('pointerup',clear);document.addEventListener('pointercancel',clear);document.addEventListener('pointermove',e=>{if(timer&&Math.hypot((e.clientX??0)-startX,(e.clientY??0)-startY)>12)clear()});document.addEventListener('click',e=>{if(holdTriggered){e.preventDefault();e.stopPropagation();holdTriggered=false;return}if(menu&&!menu.contains(e.target)&&!e.target.closest('.bubble'))closeMenu()},true);document.addEventListener('contextmenu',e=>{if(e.target.closest('.messages .bubble'))e.preventDefault()});})();</script>
 
 <style id="hello-send-button-motion">#compose #sendBtn{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;background:#611f69!important;color:#fff!important;border:none!important;border-radius:8px!important;font-size:14px;cursor:pointer;transition:transform 320ms cubic-bezier(.34,1.56,.64,1)!important}#compose #sendBtn:active{transform:scale(.92)}#compose #sendBtn:disabled{opacity:.6}</style>
+
+<style id="hello-polished-panels-and-toast">
+/* Focused UI refinement: right-edge panels, chat/status surfaces, responsive forms. */
+.modalback{justify-content:flex-end!important;align-items:stretch!important;padding:0!important;background:rgba(5,7,10,.64)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.modalback>.modal{width:min(520px,94vw)!important;max-height:100dvh!important;height:auto!important;margin:0!important;border-radius:24px 0 0 24px!important;border:1px solid rgba(255,255,255,.09)!important;border-right:0!important;padding:clamp(18px,4vw,28px)!important;background:linear-gradient(160deg,#1c1d21,#121316)!important;box-shadow:-24px 0 70px #0005!important;animation:helloRightPanel .28s cubic-bezier(.22,.8,.25,1) both!important;overscroll-behavior:contain}
+@keyframes helloRightPanel{from{opacity:.4;transform:translateX(34px)}to{opacity:1;transform:translateX(0)}}
+.modalback.hidden{display:none!important}
+.modal label{gap:8px!important;margin:14px 0!important;color:#ddd}
+.modal input,.modal textarea,.modal select{background:#25262b!important;border:1px solid #393b43!important;border-radius:13px!important;padding:13px 14px!important;color:#f4f4f5!important}
+.modal input:focus,.modal textarea:focus{border-color:#7c9cff!important;box-shadow:0 0 0 3px #7c9cff20!important}
+.modalactions button{min-height:46px;border-radius:13px!important}
+#helloGroupCreateModal .modal{width:min(540px,94vw)!important}
+#helloGroupPickList label{margin:0!important;padding:12px!important;border-bottom:1px solid #34353b!important;border-radius:12px;transition:background .18s ease}
+#helloGroupPickList label:hover{background:#292a30}
+#helloGroupPickList input[type=checkbox]{accent-color:#8ca8ff!important}
+#helloGroupSelected{margin-top:10px;padding:10px 12px!important;background:#24252a;border:1px solid #36373e;border-radius:12px}
+#helloGroupCreateModal h2,.modal h2{font-size:clamp(21px,4vw,26px);letter-spacing:-.02em}
+#settingsmodal .hello-settings-page.active{animation:helloRightPanel .24s cubic-bezier(.22,.8,.25,1) both}
+#settingsmodal .hello-settings-pagehead{flex-wrap:wrap}
+#settingsmodal .hello-settings-pagebody{min-height:0}
+#settingsmodal .hello-uiverse-settings{border-radius:15px!important;border:1px solid #282b32}
+#settingsmodal .hello-uiverse-value{padding:15px!important}
+#settingsmodal .profilehero{padding:18px 8px;background:linear-gradient(160deg,#26272c,#1a1b1f);border:1px solid #333;border-radius:18px;margin-bottom:12px}
+.entry{border-radius:16px!important;border:1px solid transparent!important;margin:3px 5px!important;padding:13px!important;transition:background .18s ease,border-color .18s ease,transform .18s ease!important}
+.entry:hover{background:#25262b!important;border-color:#34353c!important;transform:translateX(2px)}
+.entry.active{background:#292c34!important;border-color:#424957!important}
+.list{padding:8px!important}
+.hello-nav-view{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:28px 20px!important;color:#ececf0;background:radial-gradient(ellipse at top,#272a32 0,transparent 65%);gap:12px}
+.hello-nav-view h2{font-size:24px;margin:4px 0!important;letter-spacing:-.025em}
+.hello-nav-view p{color:#a4a5ae;max-width:360px;line-height:1.6;margin:0 0 8px}
+.hello-nav-view .navicon{width:80px;height:80px;border-radius:24px;display:grid;place-items:center;background:#22242a;border:1px solid #3a3c45;color:#cbd3e6}
+.hello-nav-view button{border-radius:14px!important;min-height:46px;background:#e8edff!important;color:#161b29!important}
+.hello-nav-view button:active,.modalactions button:active{transform:scale(.98)}
+.hello-toast-host{position:fixed;z-index:100000;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:min(440px,calc(100vw - 24px));display:grid;gap:8px;pointer-events:none}
+.hello-toast{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:16px;border:1px solid #41434a;background:#202126;color:#f3f4f6;box-shadow:0 14px 40px #0006;animation:helloToastIn .24s cubic-bezier(.22,.8,.25,1) both;pointer-events:auto;font-size:14px;line-height:1.45}
+.hello-toast .hello-toast-icon{width:25px;height:25px;flex:none;border-radius:9px;display:grid;place-items:center;font-weight:800;background:#333}
+.hello-toast.success{border-color:#276648;background:#15241e}.hello-toast.success .hello-toast-icon{background:#1f5139;color:#a9f4c4}
+.hello-toast.error{border-color:#693737;background:#291a1a}.hello-toast.error .hello-toast-icon{background:#5a2929;color:#ffc0c0}
+.hello-toast.info .hello-toast-icon{background:#293a58;color:#c6ddff}
+.hello-toast-close{margin-left:auto;background:transparent!important;padding:2px 6px!important;color:#aaa!important}
+@keyframes helloToastIn{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes helloToastOut{to{opacity:0;transform:translateY(-10px)}}
+@media(max-width:760px){.modalback>.modal{width:min(560px,100vw)!important;border-radius:22px 0 0 22px!important;padding:18px!important}.modalback{padding-left:6px!important}.hello-toast-host{top:calc(8px + env(safe-area-inset-top))}}
+@media(prefers-reduced-motion:reduce){.modalback>.modal,.hello-settings-page.active,.hello-toast{animation:none!important;transition:none!important}}
+</style>
+<script id="hello-toast-and-stray-text-fix">
+(()=>{let host;function toast(message,kind='info'){if(!host){host=document.createElement('div');host.className='hello-toast-host';host.setAttribute('aria-live','polite');host.setAttribute('aria-atomic','false');document.body.appendChild(host)}const item=document.createElement('div');item.className='hello-toast '+kind;const icon=kind==='success'?'✓':kind==='error'?'!':'i';item.innerHTML='<span class="hello-toast-icon">'+icon+'</span><span class="hello-toast-message"></span><button class="hello-toast-close" type="button" aria-label="Dismiss">×</button>';item.querySelector('.hello-toast-message').textContent=String(message??'');item.querySelector('.hello-toast-close').onclick=()=>item.remove();host.appendChild(item);while(host.children.length>4)host.firstElementChild.remove();setTimeout(()=>{if(item.isConnected){item.style.animation='helloToastOut .2s ease forwards';setTimeout(()=>item.remove(),210)},4200);return item}
+window.helloToast=toast;window.alert=(message)=>toast(message,/error|failed|could not|incorrect|not available|unable/i.test(String(message))?'error':'info');
+const scrub=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=walker.nextNode()){if(/^\\\\n\\\\n$/.test(n.nodeValue.trim()))n.nodeValue=''}};scrub();new MutationObserver(scrub).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
