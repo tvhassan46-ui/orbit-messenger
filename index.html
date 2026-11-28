@@ -643,3 +643,5 @@ window.helloToast=toast;window.alert=(message)=>toast(message,/success|created|s
 const scrub=()=>{const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;while(n=walker.nextNode()){if(/^\\\\n\\\\n$/.test(n.nodeValue.trim()))n.nodeValue=''}};scrub();new MutationObserver(scrub).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+
+<style id="hello-remove-chat-skeleton">.hello-skeleton-message-wrap{display:none!important;animation:none!important;visibility:hidden!important;opacity:0!important}</style>
